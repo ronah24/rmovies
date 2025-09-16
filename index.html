@@ -10,8 +10,12 @@
         font-family: Arial, sans-serif;
         background: #fff;
         color: #3b1f1f;
+        transition: background 0.3s, color 0.3s;
       }
-      /* Navbar */
+      body.dark-mode {
+        background: #1a1a1a;
+        color: #ffe6f0;
+      }
       nav {
         position: fixed;
         width: 100%;
@@ -23,11 +27,20 @@
         justify-content: space-between;
         padding: 10px 20px;
         align-items: center;
+        transition: background 0.3s, color 0.3s;
+      }
+      nav.dark-mode {
+        background: #3b1f1f;
+        color: #fff;
+        border-color: #ffe6f0;
       }
       nav .logo {
         font-weight: bold;
         font-size: 24px;
         color: #3b1f1f;
+      }
+      nav.dark-mode .logo {
+        color: #ffe6f0;
       }
       nav ul {
         list-style: none;
@@ -44,7 +57,9 @@
         font-weight: bold;
         cursor: pointer;
       }
-      /* Search bar */
+      nav.dark-mode ul li a {
+        color: #ffe6f0;
+      }
       nav .search-container {
         flex: 1;
         display: flex;
@@ -60,14 +75,16 @@
         color: #3b1f1f;
         font-weight: bold;
       }
-
-      /* Hamburger */
+      nav.dark-mode .search-container input[type="text"] {
+        background-color: #3b1f1f;
+        color: #ffe6f0;
+        border-color: #ffe6f0;
+      }
       .menu-toggle {
         display: none;
         font-size: 28px;
         cursor: pointer;
       }
-      /* Banner */
       .banner {
         position: relative;
         height: 400px;
@@ -77,6 +94,7 @@
         align-items: flex-end;
         padding: 20px;
         color: #fff;
+        transition: background-image 0.5s ease-in-out;
       }
       .banner-content {
         background: rgba(59, 31, 31, 0.6);
@@ -92,7 +110,6 @@
         border-radius: 5px;
         cursor: pointer;
       }
-      /* Genres */
       .genres {
         display: flex;
         justify-content: center;
@@ -108,7 +125,6 @@
         color: #fff;
         cursor: pointer;
       }
-      /* Movies */
       .movies {
         display: flex;
         flex-wrap: wrap;
@@ -139,7 +155,6 @@
         border-radius: 5px;
         cursor: pointer;
       }
-      /* Trailer modal */
       .trailer-modal {
         position: fixed;
         top: 0;
@@ -176,7 +191,6 @@
         font-size: 20px;
         cursor: pointer;
       }
-      /* Responsive */
       @media (max-width: 768px) {
         .banner {
           height: 300px;
@@ -229,13 +243,14 @@
         <li><a onclick="scrollToSection('banner')">Home</a></li>
         <li><a onclick="scrollToSection('genres')">Genres</a></li>
         <li><a onclick="scrollToSection('movies')">Movies</a></li>
+        <li><a onclick="toggleDarkMode()">Dark Mode</a></li>
       </ul>
       <div class="search-container">
         <input
           type="text"
           id="searchInput"
           placeholder="Search movies..."
-          onkeyup="searchMovies()"
+          oninput="searchMovies()"
         />
       </div>
     </nav>
@@ -248,7 +263,6 @@
     </div>
 
     <div class="genres" id="genres"></div>
-
     <div class="movies" id="movies"></div>
 
     <div class="trailer-modal" id="trailerModal">
@@ -261,7 +275,7 @@
     <script>
       const apiKey = "b280498b058330987e267655eeb548f2";
       let moviesData = [];
-      let bannerTrailer = "";
+      let bannerIndex = 0;
 
       async function fetchMovies() {
         const res = await fetch(
@@ -269,20 +283,48 @@
         );
         const data = await res.json();
         moviesData = data.results;
+        await fetchAllTrailers();
         displayBanner();
         displayGenres();
         displayMovies(moviesData);
+        startBannerAutoplay();
+      }
+
+      async function fetchAllTrailers() {
+        for (let movie of moviesData) {
+          const res = await fetch(
+            `https://api.themoviedb.org/3/movie/${movie.id}/videos?api_key=${apiKey}&language=en-US`
+          );
+          const data = await res.json();
+          const trailer = data.results.find(
+            (v) => v.type === "Trailer" && v.site === "YouTube"
+          );
+          movie.trailerUrl = trailer
+            ? `https://www.youtube.com/embed/${trailer.key}`
+            : "";
+        }
+        // Keep only movies with trailers for banner and movie list
+        moviesData = moviesData.filter((m) => m.trailerUrl);
       }
 
       function displayBanner() {
-        const bannerMovie = moviesData[0];
+        if (moviesData.length === 0) {
+          document.getElementById("banner").style.display = "none";
+          return;
+        }
+        const bannerMovie = moviesData[bannerIndex];
         const banner = document.getElementById("banner");
         document.getElementById("banner-title").textContent = bannerMovie.title;
         banner.style.backgroundImage = `url('https://image.tmdb.org/t/p/original${bannerMovie.backdrop_path}')`;
-        fetchTrailer(bannerMovie.id).then((url) => {
-          bannerTrailer = url;
-          document.getElementById("bannerBtn").onclick = () => playTrailer(url);
-        });
+        document.getElementById("bannerBtn").onclick = () =>
+          playTrailer(bannerMovie.trailerUrl);
+      }
+
+      function startBannerAutoplay() {
+        setInterval(() => {
+          bannerIndex = (bannerIndex + 1) % moviesData.length;
+          displayBanner();
+        }, 5000); // Change banner every 5 seconds
       }
 
       function displayGenres() {
@@ -314,30 +356,18 @@
         const moviesContainer = document.getElementById("movies");
         moviesContainer.innerHTML = "";
         movies.forEach((movie) => {
+          if (!movie.trailerUrl) return;
           const card = document.createElement("div");
           card.className = "movie-card";
           card.innerHTML = `
             <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title}">
             <h4>${movie.title}</h4>
             <button id="btn-${movie.id}">Watch Trailer</button>
-        `;
+          `;
           moviesContainer.appendChild(card);
-          fetchTrailer(movie.id).then((url) => {
-            document.getElementById(`btn-${movie.id}`).onclick = () =>
-              playTrailer(url);
-          });
+          document.getElementById(`btn-${movie.id}`).onclick = () =>
+            playTrailer(movie.trailerUrl);
         });
-      }
-
-      async function fetchTrailer(movieId) {
-        const res = await fetch(
-          `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${apiKey}&language=en-US`
-        );
-        const data = await res.json();
-        const trailer = data.results.find(
-          (v) => v.type === "Trailer" && v.site === "YouTube"
-        );
-        return trailer ? `https://www.youtube.com/embed/${trailer.key}` : "";
       }
 
       function playTrailer(url) {
@@ -375,6 +405,11 @@
 
       function toggleMenu() {
         document.querySelector("nav ul").classList.toggle("show");
+      }
+
+      function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+        document.querySelector("nav").classList.toggle("dark-mode");
       }
 
       fetchMovies();

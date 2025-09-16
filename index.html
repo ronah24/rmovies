@@ -20,13 +20,16 @@
         position: fixed;
         width: 100%;
         top: 0;
+        left: 0;
         background-color: #fff;
         border-bottom: 2px solid #d8a39d;
         z-index: 1000;
         display: flex;
+        flex-direction: row;
+        align-items: center;
         justify-content: space-between;
         padding: 10px 20px;
-        align-items: center;
+        box-sizing: border-box;
         transition: background 0.3s, color 0.3s;
       }
       nav.dark-mode {
@@ -38,6 +41,9 @@
         font-weight: bold;
         font-size: 24px;
         color: #3b1f1f;
+        margin-bottom: 0;
+        margin-right: 20px;
+        white-space: nowrap;
       }
       nav.dark-mode .logo {
         color: #ffe6f0;
@@ -45,8 +51,16 @@
       nav ul {
         list-style: none;
         display: flex;
+        flex-direction: row;
+        align-items: center;
         margin: 0;
         padding: 0;
+        width: auto;
+        background: none;
+        position: static;
+        box-shadow: none;
+        border: none;
+        transition: none;
       }
       nav ul li {
         margin: 0 10px;
@@ -61,9 +75,10 @@
         color: #ffe6f0;
       }
       nav .search-container {
-        flex: 1;
+        width: auto;
         display: flex;
         justify-content: center;
+        margin-top: 0;
       }
       nav .search-container input[type="text"] {
         padding: 5px 10px;
@@ -84,6 +99,16 @@
         display: none;
         font-size: 28px;
         cursor: pointer;
+        margin-bottom: 0;
+        margin-left: 10px;
+        margin-right: 10px;
+        align-items: center;
+        background: none;
+        border: none;
+        color: #3b1f1f;
+      }
+      nav.dark-mode .menu-toggle {
+        color: #ffe6f0;
       }
       .banner {
         position: relative;
@@ -205,32 +230,74 @@
           height: 200px;
         }
       }
+      @media (max-width: 900px) {
+        nav {
+          flex-wrap: wrap;
+          padding: 8px 10px;
+        }
+        nav .logo {
+          font-size: 20px;
+          margin-right: 10px;
+        }
+        nav .search-container input[type="text"] {
+          width: 180px;
+        }
+      }
       @media (max-width: 480px) {
         .movie-card {
           width: 90%;
+        }
+        nav {
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: center;
+          padding: 8px 5px;
+        }
+        nav .logo {
+          font-size: 18px;
+          margin-right: 8px;
+        }
+        .menu-toggle {
+          display: flex !important;
+          align-items: center;
+          margin-left: 0;
+          margin-right: 8px;
         }
         nav ul {
           flex-direction: column;
           background: #fff;
           position: absolute;
-          top: 60px;
+          top: 48px;
           right: -200px;
-          transition: 0.3s;
-          width: 150px;
+          transition: right 0.3s;
+          width: 160px;
           border: 1px solid #d8a39d;
+          z-index: 1100;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          align-items: flex-start;
+        }
+        nav.dark-mode ul {
+          background: #3b1f1f;
+          border-color: #ffe6f0;
         }
         nav ul.show {
-          right: 10px;
+          right: 5px;
         }
         nav ul li {
-          margin: 10px 0;
-        }
-        .menu-toggle {
-          display: block;
+          margin: 8px 0;
         }
         nav .search-container {
-          order: 1;
-          margin: 10px 0;
+          flex: 1 1 100%;
+          order: 3;
+          width: 100%;
+          margin: 8px 0 0 0;
+          justify-content: flex-start;
+        }
+        nav .search-container input[type="text"] {
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          font-size: 14px;
         }
       }
     </style>
